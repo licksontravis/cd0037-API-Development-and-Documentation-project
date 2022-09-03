@@ -166,3 +166,27 @@ By making notes ahead of time, you will practice the core skill of being able to
     'current_category': 'Entertainment'
 }
 ```
+
+#### POST /quizzes
+
+- Sends a post request in order to get the next question
+- Request Body:
+```
+{
+    'previous_questions': [1, 4, 20, 15],
+    quiz_category': 'current category'
+}
+```
+
+- Returns: a single new question object
+```
+{
+    'question': {
+        'id': 1,
+        'question': 'This is a question',
+        'answer': 'This is an answer',
+        'difficulty': 5,
+        'category': 4
+    }
+}
+```

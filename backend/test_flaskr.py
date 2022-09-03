@@ -70,6 +70,14 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data["total_questions"], 0)
         self.assertEqual(len(data["questions"]), 0)
+    
+    def test_get_quizz_quetion(self):
+        res = self.client().post("/quizzes", json={"previous_questions":[],"quiz_category":"Art"})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data["question"]["category"], 2)
+
 
     # def test_delete_question(self):
     #     res = self.client().delete('/questions/1')

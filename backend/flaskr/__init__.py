@@ -7,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
 
-from models import setup_db, Question, Category
+from models import setup_db, Question, Category, db
 
 QUESTIONS_PER_PAGE = 10
 
@@ -51,10 +51,13 @@ def create_app(test_config=None):
     """
     @app.route("/categories")
     def get_categories():
-        categories = {cat.id : cat.type for cat in Category.query.all()}
-        return jsonify({
-            "categories": categories
-        })
+        try:
+            categories = {cat.id : cat.type for cat in Category.query.all()}
+            return jsonify({
+                "categories": categories
+            })
+        except:
+            abort(422)
 
     """
     @TODO:
@@ -78,7 +81,7 @@ def create_app(test_config=None):
         categories = {cat.id : cat.type for cat in Category.query.all()}
         return jsonify({
             "questions": current_questions,
-            "total_questions": len(current_questions),
+            "total_questions": len(Question.query.all()),
             "categories": categories,
             "current_category": None
         })
@@ -103,7 +106,7 @@ def create_app(test_config=None):
             categories = {cat.id : cat.type for cat in Category.query.all()}
             return jsonify({
                 "questions": current_questions,
-                "total_questions": len(current_questions),
+                "total_questions": len(Question.query.all()),
                 "current_category": None,
                 "categories": categories
             })
@@ -136,7 +139,7 @@ def create_app(test_config=None):
                 current_questions = paginate_questions(request, selection)
                 return jsonify({
                     "questions": current_questions,
-                    "total_questions": len(current_questions),
+                    "total_questions": len(Question.query.all()),
                     "current_category": None,
                 })
 
@@ -188,7 +191,44 @@ def create_app(test_config=None):
     one question at a time is displayed, the user is allowed to answer
     and shown whether they were correct or not.
     """
+    @app.route("/quizzes", methods=["POST"])
+    def get_quiz_question():
+        body = request.get_json()
+        previous_questions_id_list = body.get("previous_questions", None)
 
+        quiz_category = body.get("quiz_category",None)
+        try:
+            if quiz_category["id"]==0: # ===> We click on "ALL"
+                elligible_questions = Question.query.all()
+            else: # ===> We select one category (not "ALL")
+                current_cat = Category.query.get(int(quiz_category["id"]))
+                if len(previous_questions_id_list)==0: # ===> We just started playing (previous question lit is Empty)
+                    elligible_questions = Question.query.filter(Question.category==current_cat.id).all()
+                else:
+                
+                    elligible_questions = Question.query.filter(db.and_(
+                            Question.id.notin_(previous_questions_id_list),
+                            Question.category==current_cat.id
+                            )
+                        ).all()
+            if elligible_questions:
+                random_question_id = random.choice([q.id for q in elligible_questions])
+                next_question = Question.query.get(random_question_id)
+                return jsonify({
+                    "question":{
+                        "id": next_question.id,
+                        "question": next_question.question,
+                        "answer": next_question.answer,
+                        "difficulty": next_question.difficulty,
+                        "category": next_question.category
+                    }
+                })
+            else: # ===> We finish anwser all questions for the select category
+                return jsonify({
+                    "question":None
+                })
+        except:
+            abort(422)
     """
     @TODO:
     Create error handlers for all expected errors
