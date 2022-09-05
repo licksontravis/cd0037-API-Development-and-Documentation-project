@@ -11,6 +11,7 @@ from models import setup_db, Question, Category, db
 
 QUESTIONS_PER_PAGE = 10
 
+
 def paginate_questions(request, selection):
     page = request.args.get("page", 1, type=int)
     start = (page - 1) * QUESTIONS_PER_PAGE
@@ -21,13 +22,15 @@ def paginate_questions(request, selection):
 
     return current_questions
 
+
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__)
     setup_db(app)
 
     """
-    @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
+    @TODO: Set up CORS. Allow '*' for origins. 
+    Delete the sample route after completing the TODOs
     """
     CORS(app)
 
@@ -170,16 +173,19 @@ def create_app(test_config=None):
     """
     @app.route("/categories/<int:category_id>/questions")
     def get_questions_by_category(category_id):
-        selection = Question.query.filter(Question.category == category_id).order_by(Question.id).all()
-        current_questions = paginate_questions(request, selection)
+        try:
+            selection = Question.query.filter(Question.category == category_id).order_by(Question.id).all()
+            current_questions = paginate_questions(request, selection)
 
-        if len(current_questions) == 0:
-            abort(404)
-        return jsonify({
-            "questions": current_questions,
-            "total_questions": len(current_questions),
-            "current_category": None
-        })
+            if len(current_questions) == 0:
+                abort(404)
+            return jsonify({
+                "questions": current_questions,
+                "total_questions": len(current_questions),
+                "current_category": None
+            })
+        except:
+            abort(422)
     """
     @TODO:
     Create a POST endpoint to get questions to play the quiz.
@@ -198,11 +204,11 @@ def create_app(test_config=None):
 
         quiz_category = body.get("quiz_category",None)
         try:
-            if quiz_category["id"]==0: # ===> We click on "ALL"
+            if quiz_category["id"] == 0: # ===> We click on "ALL"
                 elligible_questions = Question.query.all()
             else: # ===> We select one category (not "ALL")
                 current_cat = Category.query.get(int(quiz_category["id"]))
-                if len(previous_questions_id_list)==0: # ===> We just started playing (previous question lit is Empty)
+                if len(previous_questions_id_list) == 0: # ===> We just started playing (previous question lit is Empty)
                     elligible_questions = Question.query.filter(Question.category==current_cat.id).all()
                 else:
                 
